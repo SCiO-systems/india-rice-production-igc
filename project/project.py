@@ -1,10 +1,10 @@
-import osgeo, gdal
+import osgeo, gdal, osr
 import helpers.aux as aux
 import numpy as np
 import matplotlib.pyplot as plt
 
 geojson_fn = './data/IND.geo.json'
-bio_fn = './data/bio_1.asc'
+bio_fn = './data/tmax_1.asc'
 
 geojson = ''
 with open(geojson_fn, 'r') as f:
@@ -28,6 +28,14 @@ perimeter = aux.Coords2IndicesAr(
 
 india = aux.fillPolygon4Raster(perimeter, rows, cols)
 
-plt.imshow(india)
-plt.show()
+data[np.invert(india)] = nodataval
 
+drv = gdal.GetDriverByName('GTiff')
+ds = drv.Create('./results/test.tiff', cols, rows, 1, gdal.GDT_Byte)
+ds.SetGeoTransform((
+    xllcorner, cellsize, 0, yllcorner + rows * cellsize, 0, cellsize
+))
+ds.SetProjection(osr.SpatialReference().ExportToWkt())
+ds.GetRasterBand(1).WriteArray(data)
+ds.GetRasterBand(1).SetNoDataValue(nodataval)
+ds.GetRasterBand(1).FlushCache()
