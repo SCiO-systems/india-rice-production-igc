@@ -1,7 +1,6 @@
 import osgeo, gdal, osr
 import helpers.aux as aux
 import numpy as np
-import matplotlib.pyplot as plt
 
 geojson_fn = './data/IND.geo.json'
 bio_fn = './data/tmax_1.asc'
