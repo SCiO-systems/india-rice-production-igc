@@ -92,7 +92,7 @@ class GeotiffBands:
         ds.FlushCache()
 
 
-def editGeotiff(tiff_f, man_fun=(lambda x,y,z,w : x)):
+def editGeotiff(tiff_f, man_fun=(lambda x,y,z,w,v : x)):
     dataset = gdal.Open(tiff_f, gdal.GA_ReadOnly)
     n, m = np.shape(dataset.GetRasterBand(1).ReadAsArray())
     data = np.zeros((n,m,dataset.RasterCount), dtype=float)
@@ -106,7 +106,7 @@ def editGeotiff(tiff_f, man_fun=(lambda x,y,z,w : x)):
             nodataval = dataset.GetRasterBand(b+1).GetNoDataValue()
 
     xtl, cellsize, xskew, ytl, yskew, ncellsize = dataset.GetGeoTransform()
-    man_data = man_fun(data, xtl, ytl, cellsize)
+    man_data = man_fun(data, xtl, ytl, cellsize, nodataval)
 
     m, n, bands = man_data.shape
 
