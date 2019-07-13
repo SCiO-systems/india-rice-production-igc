@@ -55,7 +55,7 @@ class GeotiffBands:
 
         # create empty tiff
         drv = gdal.GetDriverByName('GTiff')
-        ds = drv.Create(tiff_f, in_jlr - in_jtl, in_ilr - in_itl, self.band_cnt, gdal.GDT_Byte)
+        ds = drv.Create(tiff_f, in_jlr - in_jtl, in_ilr - in_itl, self.band_cnt, gdal.GDT_Int16)
         ds.SetGeoTransform((
             xllcorner + in_jtl * cellsize, cellsize, 0, yllcorner + (rows - in_itl) * cellsize, 0, -cellsize
         ))
@@ -111,7 +111,7 @@ def editGeotiff(tiff_f, man_fun=(lambda x,y,z,w : x)):
     m, n, bands = man_data.shape
 
     driver = gdal.GetDriverByName('GTiff')
-    outdata = driver.Create(tiff_f, n, m, bands, gdal.GDT_Byte)
+    outdata = driver.Create(tiff_f, n, m, bands, gdal.GDT_Int16)
     outdata.SetGeoTransform(dataset.GetGeoTransform())
     outdata.SetProjection(dataset.GetProjection())
     for b in range(bands):
