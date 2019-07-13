@@ -57,7 +57,7 @@ class GeotiffBands:
         drv = gdal.GetDriverByName('GTiff')
         ds = drv.Create(res_f, in_jlr - in_jtl, in_ilr - in_itl, self.band_cnt, gdal.GDT_Byte)
         ds.SetGeoTransform((
-            xllcorner + in_itl * cellsize, cellsize, 0, yllcorner + (rows - in_itl) * cellsize, 0, -cellsize
+            xllcorner + in_jtl * cellsize, cellsize, 0, yllcorner + (rows - in_itl) * cellsize, 0, -cellsize
         ))
 
         bandcnt = 1
