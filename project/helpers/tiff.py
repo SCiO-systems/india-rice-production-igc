@@ -24,7 +24,7 @@ class GeotiffBands:
         return [band['path'].replace(self.template, i) for i in band['range']]
 
 
-    def createTiff(self, geojson_f, res_f, rate=15, pad=3, epsg=3857):
+    def createTiff(self, geojson_f, tiff_f, rate=15, pad=3, epsg=3857):
         geojson = ''
         with open(geojson_f, 'r') as f:
             line = f.readline()
@@ -55,7 +55,7 @@ class GeotiffBands:
 
         # create empty tiff
         drv = gdal.GetDriverByName('GTiff')
-        ds = drv.Create(res_f, in_jlr - in_jtl, in_ilr - in_itl, self.band_cnt, gdal.GDT_Byte)
+        ds = drv.Create(tiff_f, in_jlr - in_jtl, in_ilr - in_itl, self.band_cnt, gdal.GDT_Byte)
         ds.SetGeoTransform((
             xllcorner + in_jtl * cellsize, cellsize, 0, yllcorner + (rows - in_itl) * cellsize, 0, -cellsize
         ))
@@ -74,9 +74,13 @@ class GeotiffBands:
 
                 # get "rough" polygon of india and set values outside of it to NODATA_value
                 india = aux.fillPolygon4Raster(perimeterIndices, rows, cols)
+
+                # crop
+                india = india[in_itl:in_ilr, in_jtl:in_jlr]
+                data = data[in_itl:in_ilr, in_jtl:in_jlr]
                 data[np.invert(india)] = nodataval
 
-                ds.GetRasterBand(bandcnt).WriteArray(data[in_itl:in_ilr, in_jtl:in_jlr])
+                ds.GetRasterBand(bandcnt).WriteArray(data)
                 ds.GetRasterBand(bandcnt).SetNoDataValue(nodataval)
 
                 bandcnt += 1
@@ -85,4 +89,33 @@ class GeotiffBands:
         # setting crs to wgs84 (epsg 3857)
         dst_srs.ImportFromEPSG(epsg)
         ds.SetProjection(dst_srs.ExportToWkt())
-        ds.GetRasterBand(bandcnt-1).FlushCache()
+        ds.FlushCache()
+
+
+def editGeotiff(tiff_f, man_fun=(lambda x,y,z,w : x)):
+    dataset = gdal.Open(tiff_f, gdal.GA_ReadOnly)
+    n, m = np.shape(dataset.GetRasterBand(1).ReadAsArray())
+    data = np.zeros((n,m,dataset.RasterCount), dtype=float)
+    nodataval = None
+
+    for b in range(dataset.RasterCount):
+        data[...,b] = dataset.GetRasterBand(b+1).ReadAsArray()
+        if nodataval and dataset.GetRasterBand(b+1).GetNoDataValue() != nodataval:
+            raise ValueError('NODATA_value not equal between bands')
+        else:
+            nodataval = dataset.GetRasterBand(b+1).GetNoDataValue()
+
+    xtl, cellsize, xskew, ytl, yskew, ncellsize = dataset.GetGeoTransform()
+    man_data = man_fun(data, xtl, ytl, cellsize)
+
+    m, n, bands = man_data.shape
+
+    driver = gdal.GetDriverByName('GTiff')
+    outdata = driver.Create(tiff_f, n, m, bands, gdal.GDT_Byte)
+    outdata.SetGeoTransform(dataset.GetGeoTransform())
+    outdata.SetProjection(dataset.GetProjection())
+    for b in range(bands):
+        print(b+1)
+        outdata.GetRasterBand(b+1).WriteArray(man_data[...,b])
+        outdata.GetRasterBand(b+1).SetNoDataValue(nodataval)
+    outdata.FlushCache()
