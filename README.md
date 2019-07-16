@@ -1,3 +1,13 @@
-# India Geotiff Creation
+# Internship Project
 
-This is a preliminary project meant to prepare data for further analysis. In particular, it extracts weather forecast data for India, using a GEOJSON file for its borders and CMIP5 for the data.
+Internship project for my summer internship at [SCiO Systems](https://scio.systems).
+
+## Description
+
+This project involves manipulating climate and weather data, recorded or predicted, concerning the region of <b>India</b>, to train machine learning models and make predictions of future crops in the area.
+
+## Documentation
+
+* [Installation](./docs/installation.md)
+* [Project Structure](./docs/structure.md)
+* [Usage](./docs/execution.md)
