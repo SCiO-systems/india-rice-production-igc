@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-git-pylint-commit-hook --always-show-violations
+git-pylint-commit-hook --always-show-violations --ignore=LICENSE --ignore=etc/ --ignore=data/ --ignore=results/ --ignore=README.md
