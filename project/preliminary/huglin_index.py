@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from helpers import tiff
-from helpers import bands
+from project.helpers import tiff
+from project.helpers import bands
 
 # include only from april to september
 TEMPLATE = '#'
@@ -57,4 +57,4 @@ def huglin_index(data, dummy_xtl, ytl, cellsize, nodataval):
 
 
 
-tiff.edit_tiff('./results/india_cmip5_huglin.tiff', man_fun=huglin_index)
+tiff.edit_tiff('./india_cmip5_huglin.tiff', man_fun=huglin_index)

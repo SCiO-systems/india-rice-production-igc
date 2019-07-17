@@ -5,7 +5,7 @@ import gdal
 import osr
 import numpy as np
 
-from . import aux
+from project.helpers import aux
 
 class GeotiffBands:
     '''GeotiffBands is an auxiliary class, created for convenience.

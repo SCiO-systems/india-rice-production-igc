@@ -1,7 +1,7 @@
 '''Creates multiband GeoTIFF from CMIP5 dataset'''
 
-from helpers import bands
-from helpers import tiff
+from project.helpers import bands
+from project.helpers import tiff
 
 MY_BANDS = tiff.GeotiffBands(bands.BANDS, bands.TEMPLATE)
 

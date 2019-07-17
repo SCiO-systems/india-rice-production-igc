@@ -11,7 +11,7 @@ from setuptools import setup
 from _version import __version__
 
 setup(
-    name='internship-george-chochlakis',
+    name='project',
     version=__version__,
     packages=find_packages(),
     scripts=[],

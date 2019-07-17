@@ -1,7 +1,7 @@
 '''This file holds, for every subdivision of data.gov.in dataset,
 the corresponding NAME_1 values from the geojson, in a dictionary of lists'''
 
-CORR = {
+GOV2GEO = {
     'Andaman & Nicobar Islands': ['Andaman and Nicobar'],
     'Arunachal Pradesh': ['Arunachal Pradesh'],
     'Assam & Meghalaya': ['Assam', 'Meghalaya'],
@@ -39,5 +39,10 @@ CORR = {
     'West Rajasthan': ['Rajasthan'],
     'West Uttar Pradesh': ['Uttar Pradesh'],
 }
+
+GEO2GOV = {}
+for key, regs in GOV2GEO.items():
+    for reg in regs:
+        GEO2GOV.setdefault(reg, []).append(key)
 
 ## 'Dadra and Nagar Haveli', 'Daman and Diu', 'Puducherry' added after manual map inspection
