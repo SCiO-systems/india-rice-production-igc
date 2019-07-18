@@ -39,3 +39,5 @@ $ . .venv/bin/activate # OR source .venv/bin/activate
 ```bash
 $ pip install -e .[dev]
 ```
+
+6. <b>Optionally, but mandatorily</b> if you want to execute `project/preliminary/rice_prod_data.py` (its results will be present in `results/india_rice_features.tiff` when ready), you need to download extra files, by following [these](../data/README.md) instructions (Copernicus section)

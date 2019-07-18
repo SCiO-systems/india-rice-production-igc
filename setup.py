@@ -25,6 +25,7 @@ setup(
             'matplotlib',
             'pylint',
             'git-pylint-commit-hook',
+            'netCDF4',
         ]
     }
 )
