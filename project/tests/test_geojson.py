@@ -5,7 +5,7 @@
 import osgeo.ogr
 
 def main():
-    '''Parses geojsons, created dict with keys = 'NAME_1'
+    '''Parses geojsons, creates dict with keys = 'NAME_1'
     and creates perimeters'''
 
     geojson = {}
