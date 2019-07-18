@@ -3,4 +3,5 @@
 from pprint import pprint
 from project.helpers import state_correspondence as sc
 
-pprint(sc.GEO2GOV)
+if __name__ == '__main__':
+    pprint(sc.GEO2GOV)

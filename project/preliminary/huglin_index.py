@@ -5,24 +5,6 @@ import numpy as np
 from project.helpers import tiff
 from project.helpers import bands
 
-# include only from april to september
-TEMPLATE = '#'
-BANDS = [
-    {
-        'path': f'{bands.dirname("tmax")}/tmax_{TEMPLATE}.asc',
-        'range': [str(i) for i in range(4, 10)],
-        'desc': 'monthly_maximum_temperature'
-    },
-    {
-        'path': f'{bands.dirname("tmean")}/tmean_{TEMPLATE}.asc',
-        'range': [str(i) for i in range(4, 10)],
-        'desc': 'monthly_maximum_temperature'
-    },
-]
-
-HUGLIN_BANDS = tiff.GeotiffBands(BANDS, TEMPLATE)
-HUGLIN_BANDS.create_tiff('./data/IND.geo.json', './results/india_cmip5_huglin.tiff')
-
 def huglin_index(data, dummy_xtl, ytl, cellsize, nodataval):
     '''Computes Huglin Index and append it to `data`'''
     def lat2index(lat):
@@ -55,6 +37,28 @@ def huglin_index(data, dummy_xtl, ytl, cellsize, nodataval):
 
     return np.dstack((data, huglin_band))
 
+def main():
+    '''Main'''
+    # include only from april to september
+    template = '#'
+    temp_bands = [
+        {
+            'path': f'{bands.dirname("tmax")}/tmax_{template}.asc',
+            'range': [str(i) for i in range(4, 10)],
+            'desc': 'monthly_maximum_temperature'
+        },
+        {
+            'path': f'{bands.dirname("tmean")}/tmean_{template}.asc',
+            'range': [str(i) for i in range(4, 10)],
+            'desc': 'monthly_maximum_temperature'
+        },
+    ]
+
+    huglin_bands = tiff.GeotiffBands(temp_bands, template)
+    huglin_bands.create_tiff('./data/IND.geo.json', './results/india_cmip5_huglin.tiff')
+
+    tiff.edit_tiff('./results/india_cmip5_huglin.tiff', man_fun=huglin_index)
 
 
-tiff.edit_tiff('./results/india_cmip5_huglin.tiff', man_fun=huglin_index)
+if __name__ == '__main__':
+    main()
