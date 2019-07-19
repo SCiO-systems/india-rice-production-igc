@@ -4,11 +4,15 @@ import numpy as np
 
 from project.helpers import tiff
 from project.helpers import bands
+from project.helpers.tiff import epsg_trans
 
-def huglin_index(data, dummy_xtl, ytl, cellsize, nodataval):
+def huglin_index(data, dummy_xtl, dummy_xcellsize, ytl, ycellsize, nodataval):
     '''Computes Huglin Index and append it to `data`'''
     def lat2index(lat):
-        '''Latitude to Huglin Index's K index'''
+        '''Latitude in epsg3857 to Huglin Index's K index'''
+        # tested for various lng, constant lat -> same lat output
+        [(dummy_lng, lat)] = epsg_trans([(0, lat)], epsg_in=4326, epsg_out=4326)
+        lat = abs(lat)
         if lat % 2 == 0:
             lat -= 1
         return int(lat/2)-1
@@ -23,7 +27,7 @@ def huglin_index(data, dummy_xtl, ytl, cellsize, nodataval):
 
     huglin_band = np.zeros(data.shape[:2])
     for lat_ind in range(data.shape[0]):
-        lat = ytl - lat_ind * cellsize
+        lat = ytl - lat_ind * ycellsize
         k_ar_ind = lat2index(lat)
         for lng_ind in range(data.shape[1]):
             if data[lat_ind, lng_ind, 0] != nodataval:

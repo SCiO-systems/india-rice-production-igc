@@ -3,9 +3,25 @@
 import osgeo
 import gdal
 import osr
+import pyproj
 import numpy as np
 
 from project.helpers import aux
+
+def epsg_trans(points, epsg_in=4326, epsg_out=4326):
+    '''Coord transform from `epsg_in` to `epsg_out`.
+
+    Arguments:
+
+    `points`: list of iterables where [0]=lng, [1]=lat
+
+    `epsg_in`: epsg of input points
+
+    `epsg_out`: epsg of output points'''
+    pin = pyproj.Proj(init=f'epsg:{epsg_in}')
+    pout = pyproj.Proj(init=f'epsg:{epsg_out}')
+
+    return [pyproj.transform(pin, pout, lng, lat) for lng, lat in points]
 
 class GeotiffBands:
     '''GeotiffBands is an auxiliary class, created for convenience.
@@ -46,7 +62,7 @@ class GeotiffBands:
         return [band['path'].replace(self.template, i) for i in band['range']]
 
 
-    def create_tiff(self, geojson_f, tiff_f, rate=15, pad=3, epsg=3857):
+    def create_tiff(self, geojson_f, tiff_f, rate=15, pad=3, epsg=4326):
         '''Creates (multiband) GeoTIFF based on its atttributes' information
 
         Arguments:
@@ -92,9 +108,23 @@ class GeotiffBands:
         # create empty tiff
         drv = gdal.GetDriverByName('GTiff')
         dst = drv.Create(tiff_f, in_jlr - in_jtl, in_ilr - in_itl, self.band_cnt, gdal.GDT_Int16)
+
+        # get proper epsg 3857 coords and cells
+        xtlcorner = xllcorner + in_jtl * cellsize
+        ytlcorner = yllcorner + (rows - in_itl) * cellsize
+
+        [(xlrcorner, ylrcorner)] = epsg_trans([
+            (xtlcorner + (in_jlr - in_jtl) * cellsize, ytlcorner - (in_ilr - in_itl) * cellsize)
+        ])
+
+        [(xtlcorner, ytlcorner)] = epsg_trans([(xtlcorner, ytlcorner)])
+
+        xcellsize = abs(xtlcorner - xlrcorner) / (in_jlr - in_jtl)
+        ycellsize = abs(ytlcorner - ylrcorner) / (in_ilr - in_itl)
+
         dst.SetGeoTransform((
-            xllcorner + in_jtl * cellsize, cellsize, 0,
-            yllcorner + (rows - in_itl) * cellsize, 0, -cellsize
+            xtlcorner, xcellsize, 0,
+            ytlcorner, 0, -ycellsize
         ))
 
         bandcnt = 1
@@ -129,19 +159,24 @@ class GeotiffBands:
         dst.FlushCache()
 
 
-def edit_tiff(tiff_f, man_fun=(lambda x, y, z, w, v: x)):
+def edit_tiff(tiff_f, man_fun=(lambda x, y, z, w, v, u: x)):
     '''Appends bands to GeoTIFF.
 
     Arguments:
 
     * `tiff_f`: GeoTIFF filename
 
-    * `man_fun`: Manipulating function. Has 5 (non-keyword) ordered arguments:
-     `data_array`: the bands of the GeoTIFF as read, in the form of numpy array,
-     'xtl': top left x coordinate / longitude, `ytl`: Top left y coordinate / latitude,
-     `cellsize`: cell resolution, `nodataval`: no data value,
-     should be the same for every band. Should return the resulting bands in
-     numpy array form (semantically, it should append new bands)
+    * `man_fun`: Manipulating function. Has 6 (non-keyword) ordered arguments:
+
+    `data_array`: the bands of the GeoTIFF as read, in the form of numpy array,
+
+    `xtl`: top left x coordinate / longitude, `xcellsize`: cell resolution - longitude,
+
+    `ytl`: top left y coordinate / latitude, `ycellsize`: cell resolution - latitude,
+
+    `nodataval`: no data value, should be the same for every band.
+    Should return the resulting bands in numpy array form
+    (semantically, it should append new bands)
     '''
     dataset = gdal.Open(tiff_f, gdal.GA_ReadOnly)
     nrows, ncols = np.shape(dataset.GetRasterBand(1).ReadAsArray())
@@ -154,8 +189,9 @@ def edit_tiff(tiff_f, man_fun=(lambda x, y, z, w, v: x)):
             raise ValueError('NODATA_value not equal between bands')
         nodataval = dataset.GetRasterBand(band+1).GetNoDataValue()
 
-    xtl, cellsize, dummy_xskew, ytl, dummy_yskew, dummy_ncellsize = dataset.GetGeoTransform()
-    man_data = man_fun(data, xtl, ytl, cellsize, nodataval)
+    xtl, xcellsize, dummy_xskew, ytl, dummy_yskew, ycellsize = dataset.GetGeoTransform()
+    ycellsize *= -1
+    man_data = man_fun(data, xtl, xcellsize, ytl, ycellsize, nodataval)
 
     ncols, nrows, bands = man_data.shape
 
