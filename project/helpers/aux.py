@@ -2,20 +2,24 @@
 
 import numpy as np
 from matplotlib.path import Path
+from scipy.ndimage.morphology import binary_closing
 
-def coords2indices(point, cellsize=0.16666666667, xllcorner=-180, yllcorner=-60):
+
+def coords2indices(point, xcellsize=0.16666666667, ycellsize=0.166666667,
+                   xllcorner=-180, yllcorner=-60):
     '''Returns array indices of geographical point'''
     # point in (>, Λ) => (x,y) reversed for matrix conventions (V, >)
-    j_ar = int(np.floor((point[0] - xllcorner) / cellsize))
-    i_ar = int(np.floor((point[1] - yllcorner) / cellsize))
+    j_ar = int(np.floor((point[0] - xllcorner) / xcellsize))
+    i_ar = int(np.floor((point[1] - yllcorner) / ycellsize))
     return (i_ar, j_ar)
 
-def coords2indices_ar(points, cellsize=0.16666666667, xllcorner=-180, yllcorner=-60):
+def coords2indices_ar(points, xcellsize=0.16666666667, ycellsize=0.166666667,
+                      xllcorner=-180, yllcorner=-60):
     '''Returns array indices of multiple geographical points'''
     coords = []
     for point in points:
         # NOTE: duplicates because of upsampling (replace with (ordered) set?)
-        coords.append(coords2indices(point, cellsize, xllcorner, yllcorner))
+        coords.append(coords2indices(point, xcellsize, ycellsize, xllcorner, yllcorner))
     return coords
 
 def upsample_geojson(coords_ar, rate):
@@ -66,9 +70,23 @@ def asc_read(filename):
 
     return nrows, ncols, xllcorner, yllcorner, cellsize, nodataval, np.array(data)
 
-def fill_polygon_for_raster(perimeter, rows=900, cols=2160):
+def fill_polygon_for_raster(perimeter, rows=900, cols=2160,
+                            flip=True, closing={'close': False, 'struct': np.ones((4, 4))}):
     '''Given the indices of the perimeter,
     returns the filled polygon (inclusive)
+
+    Arguments:
+
+    `perimeter`: points on perimeter (inorder preferable)
+
+    `rows`: #rows
+
+    `cols`: #columns
+
+    `flip`: bool, flip final result
+
+    `closing`: dict, required keys `'close'` (bool) & `'struct'` (2d iterable),
+    perform binary closing on result
     '''
     xs_2d, ys_2d = np.meshgrid(np.arange(rows), np.arange(cols))
     xs_2d, ys_2d = xs_2d.flatten(), ys_2d.flatten()
@@ -76,7 +94,13 @@ def fill_polygon_for_raster(perimeter, rows=900, cols=2160):
 
     grid = Path(perimeter).contains_points(geo_points)
     # np.flip(axis=0) to get [0,0] as top left point of raster
-    return np.flip(grid.reshape(cols, rows).T, 0)
+    grid = grid.reshape(cols, rows).T
+    grid[([x for x, _  in perimeter], [y for _, y in perimeter])] = True
+    if closing['close']:
+        grid = binary_closing(grid, structure=closing['struct'])
+    if flip:
+        grid = np.flip(grid, 0)
+    return  grid
 
 # def bounding_box_ar(coords, nodataval=-9999):
 #     def boundOneDimension(a):
@@ -118,6 +142,30 @@ def bounding_box_per(perimeter, rows):
     in_jlr = max([j for _, j in perimeter])
     # because of np.flip in fillPolygon4Raster, xs must be reversed (rows - _)
     return rows - in_ilr - 1, in_jtl, rows - in_itl - 1, in_jlr
+
+def bounding_box_pers(per_dict, rows):
+    '''Returns the bounding box around the "actual" perimeter
+
+    Arguments:
+
+    * `perimeter`: Dict of lists of perimeter points, needn't be in order
+
+    * `rows`: number of rows in geographical array, needed because array contains
+    top left spot at [0,0]'''
+    itl, jtl = np.Inf, np.Inf
+    ilr, jlr = 0, 0
+    for key in per_dict.keys():
+        for per in per_dict[key]:
+            for lat, lng in per:
+                if lat < itl:
+                    itl = lat
+                if lat > ilr:
+                    ilr = lat
+                if lng < jtl:
+                    jtl = lng
+                if lng > jlr:
+                    jlr = lng
+    return rows - ilr - 1, jtl, rows - itl - 1, jlr
 
 def padding(bbp, rows, cols, pad=3):
     '''Add padding to bounding box'''

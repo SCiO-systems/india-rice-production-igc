@@ -99,7 +99,8 @@ class GeotiffBands:
 
         # get perimeter and cropping params
         perimeter_indices = aux.coords2indices_ar(
-            indian_coords, xllcorner=xllcorner, yllcorner=yllcorner, cellsize=cellsize
+            indian_coords, xllcorner=xllcorner, yllcorner=yllcorner,
+            xcellsize=cellsize, ycellsize=cellsize
         )
         in_itl, in_jtl, in_ilr, in_jlr = aux.padding(
             aux.bounding_box_per(perimeter_indices, rows), rows, cols, pad=pad
@@ -107,7 +108,7 @@ class GeotiffBands:
 
         # create empty tiff
         drv = gdal.GetDriverByName('GTiff')
-        dst = drv.Create(tiff_f, in_jlr - in_jtl, in_ilr - in_itl, self.band_cnt, gdal.GDT_Int16)
+        dst = drv.Create(tiff_f, in_jlr - in_jtl + 1, in_ilr - in_itl + 1, self.band_cnt, gdal.GDT_Int16)
 
         # get proper epsg 3857 coords and cells
         xtlcorner = xllcorner + in_jtl * cellsize
@@ -136,15 +137,16 @@ class GeotiffBands:
                 rows, cols, xllcorner, yllcorner, cellsize, nodataval, data = aux.asc_read(ascfile)
 
                 perimeter_indices = aux.coords2indices_ar(
-                    indian_coords, xllcorner=xllcorner, yllcorner=yllcorner, cellsize=cellsize
+                    indian_coords, xllcorner=xllcorner, yllcorner=yllcorner,
+                    xcellsize=cellsize, ycellsize=cellsize
                 )
 
                 # get "rough" polygon of india and set values outside of it to NODATA_value
                 india = aux.fill_polygon_for_raster(perimeter_indices, rows, cols)
 
                 # crop
-                india = india[in_itl:in_ilr, in_jtl:in_jlr]
-                data = data[in_itl:in_ilr, in_jtl:in_jlr]
+                india = india[in_itl:in_ilr+1, in_jtl:in_jlr+1]
+                data = data[in_itl:in_ilr+1, in_jtl:in_jlr+1]
                 data[np.invert(india)] = nodataval
 
                 dst.GetRasterBand(bandcnt).WriteArray(data)
@@ -185,13 +187,13 @@ def edit_tiff(tiff_f, man_fun=(lambda x, y, z, w, v, u: x)):
 
     for band in range(dataset.RasterCount):
         data[..., band] = dataset.GetRasterBand(band+1).ReadAsArray()
-        if nodataval and dataset.GetRasterBand(band+1).GetNoDataValue() != nodataval:
+        if nodataval and \
+             dataset.GetRasterBand(band+1).GetNoDataValue() != nodataval:
             raise ValueError('NODATA_value not equal between bands')
         nodataval = dataset.GetRasterBand(band+1).GetNoDataValue()
 
     xtl, xcellsize, dummy_xskew, ytl, dummy_yskew, ycellsize = dataset.GetGeoTransform()
-    ycellsize *= -1
-    man_data = man_fun(data, xtl, xcellsize, ytl, ycellsize, nodataval)
+    man_data = man_fun(data, xtl, xcellsize, ytl, -ycellsize, nodataval)
 
     ncols, nrows, bands = man_data.shape
 

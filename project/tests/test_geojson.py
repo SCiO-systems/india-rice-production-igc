@@ -50,8 +50,7 @@ def main():
     for key in perimeters_coords:
         print(key+':')
         for per in perimeters_coords[key]:
-            for pol in per:
-                print(pol)
+            print(per)
 
 if __name__ == '__main__':
     main()

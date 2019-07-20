@@ -26,6 +26,8 @@ setup(
             'pylint',
             'git-pylint-commit-hook',
             'netCDF4',
+            'pyproj',
+            'scipy',
         ]
     }
 )

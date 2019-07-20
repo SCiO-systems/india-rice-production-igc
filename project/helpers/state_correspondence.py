@@ -1,5 +1,6 @@
 '''This file holds, for every subdivision of data.gov.in dataset,
-the corresponding NAME_1 values from the geojson, in a dictionary of lists'''
+the corresponding NAME_1 values from the geojson, in a dictionary of lists
+and vice versa'''
 
 GOV2GEO = {
     'Andaman & Nicobar Islands': ['Andaman and Nicobar'],
