@@ -28,6 +28,7 @@ setup(
             'netCDF4',
             'pyproj',
             'scipy',
+            'tensorflow'
         ]
     }
 )
