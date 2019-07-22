@@ -29,7 +29,7 @@ def main():
     rain_f = './data/data.gov.in/monthly-rainfall.in.json'
 
     # model: last crop and weather thereafter, crops in 2000, 2005, 2010
-    years = [i for i in range(2000, 2011)]
+    years = [i for i in range(2001, 2011)]
     data_label = 'ANNUAL'
     nodataval = -9999
 
