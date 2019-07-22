@@ -23,7 +23,7 @@ $ python project/preliminary/huglin_index.py
 * To create Dataset for Rice Production Models ([NOTE](./installation): Download Copernicus datasets)
 
 ```bash
-$ python projectpreliminary/rice_prod_data.py
+$ python project/preliminary/rice_prod_data.py
 Andaman & Nicobar Islands
 ...
 ```
