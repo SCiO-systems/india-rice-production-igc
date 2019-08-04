@@ -149,14 +149,15 @@ def main():
     # Inorder:
     # * 2000, 2005, 2010 crop production
     # * LAI, NDVI (year 2014)
-    # * By year (ascending, from 2000 to 2010):
+    # * By year (ascending, from 2001 to 2010):
     #   * max temperature
     #   * mean temperature
     #   * min temperature
     #   * storms
     #   * rainfall by state
     #
-    # Total number of bands: 60
+    # Total number of bands: 55
+
     if last_band != nbands:
         raise ValueError('Variable `last_band` not equal to number of bands')
 
